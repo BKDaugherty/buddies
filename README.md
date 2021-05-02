@@ -10,7 +10,7 @@ To figure out how to boot up the server, run `cargo run -- --help` in the root o
 
 ## Code Structure
 
-Here's a quick rundown of the structure of the application.
+Here's a quick rundown of the structure of the application. I pulled most of the boilerplate from my [notes application which you can see here](https://github.com/BKDaugherty/notes)
 
 ### Entrypoint
 `src/main.rs` is the entry point of the application. There you'll find the parsing of command line arguments, us deciding which `Storage` we will use, initialization of the logger, request_handler, and webserver.
@@ -148,3 +148,5 @@ It also makes it a lot easier to write tests, as you can just instantiate a Requ
 ## mod types
 
 This is where we'll define all of our sweet sweet types used throughout the application. Today they are all empty, and really only exist so the boilerplate can compile.
+
+
