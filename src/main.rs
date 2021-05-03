@@ -26,7 +26,7 @@ arg_enum! {
 #[structopt(name = "buddies", about = "A tool to help me be a better buddy")]
 struct Args {
     /// Database URL to connect to
-    #[structopt(long, env)]
+    #[structopt(long, env, default_value = "i-am-currently-unused")]
     database_url: String,
     /// Make the logging loud and annoying
     #[structopt(short, long)]

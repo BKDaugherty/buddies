@@ -1,12 +1,17 @@
 use crate::lib::storage::BuddiesStore;
 use crate::lib::types::{
     ArchiveBuddyRequest, ArchiveBuddyResponse, ArchiveInteractionRequest,
-    ArchiveInteractionResponse, CreateBuddyRequest, CreateBuddyResponse, CreateInteractionRequest,
-    CreateInteractionResponse, GetBuddiesRequest, GetBuddiesResponse, GetInteractionsRequest,
-    GetInteractionsResponse, LoginRequest, LoginResponse, SignUpRequest, SignUpResponse,
-    UpdateBuddyRequest, UpdateBuddyResponse, UpdateInteractionRequest, UpdateInteractionResponse,
+    ArchiveInteractionResponse, Buddy, CreateBuddyRequest, CreateBuddyResponse,
+    CreateInteractionRequest, CreateInteractionResponse, Datestamp, GetBuddiesRequest,
+    GetBuddiesResponse, GetInteractionsRequest, GetInteractionsResponse, Location, LoginRequest,
+    LoginResponse, SignUpRequest, SignUpResponse, Timestamp, UpdateBuddyRequest,
+    UpdateBuddyResponse, UpdateInteractionRequest, UpdateInteractionResponse,
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
+use chrono::{NaiveDate, NaiveDateTime};
+use std::convert::TryInto;
+use std::time::SystemTime;
+use uuid::Uuid;
 
 pub trait BuddiesService: Send + Sync + Clone + 'static {
     fn login(&self, request: LoginRequest) -> Result<LoginResponse>;
@@ -47,17 +52,44 @@ impl<S: BuddiesStore> RequestHandler<S> {
 
 impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
     fn login(&self, request: LoginRequest) -> Result<LoginResponse> {
-	todo!()
+        todo!()
     }
     fn sign_up(&mut self, request: SignUpRequest) -> Result<SignUpResponse> {
-	todo!()
+        todo!()
     }
 
     fn create_buddy(&mut self, request: CreateBuddyRequest) -> Result<CreateBuddyResponse> {
-        todo!()
+        let buddy_id = Uuid::new_v4();
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        let date_time = NaiveDateTime::from_timestamp(now.try_into().unwrap(), 0);
+        let buddy = Buddy {
+            id: buddy_id,
+            birthday: request.birthday,
+            cadence: request.cadence,
+            notes: request.notes,
+            location: request.location,
+            user_id: request.user_id,
+            last_contacted: Datestamp(format!("{}", date_time.date())),
+            create_timestamp: Timestamp(now),
+            last_update_timestamp: Timestamp(now),
+            delete_timestamp: None,
+        };
+
+        self.storage
+            .create_buddy(buddy.clone())
+            .context(format!("Creating buddy with id {}", buddy_id))?;
+
+        Ok(CreateBuddyResponse { buddy })
     }
     fn get_buddies(&self, request: GetBuddiesRequest) -> Result<GetBuddiesResponse> {
-        todo!()
+        let buddies = self
+            .storage
+            .get_buddies(request.user_id)
+            .context(format!("getting buddies under id {}", request.user_id))?;
+
+        Ok(GetBuddiesResponse { buddies })
     }
     fn update_buddy(&mut self, request: UpdateBuddyRequest) -> Result<UpdateBuddyResponse> {
         todo!()
