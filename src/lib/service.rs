@@ -66,6 +66,7 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
         let date_time = NaiveDateTime::from_timestamp(now.try_into().unwrap(), 0);
         let buddy = Buddy {
             id: buddy_id,
+            name: request.name,
             birthday: request.birthday,
             cadence: request.cadence,
             notes: request.notes,

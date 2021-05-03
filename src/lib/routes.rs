@@ -1,8 +1,8 @@
-use crate::lib::service::RequestHandler;
+use crate::lib::service::{BuddiesService, RequestHandler};
 use crate::lib::storage::BuddiesStore;
 use crate::lib::types::{
-    CreateBuddyRequest, CreateInteractionRequest, LoginRequest, SignUpRequest, UpdateBuddyRequest,
-    UpdateInteractionRequest,
+    CreateBuddyRequest, CreateInteractionRequest, GetBuddiesRequest, LoginRequest, SignUpRequest,
+    UpdateBuddyRequest, UpdateInteractionRequest,
 };
 
 use uuid::Uuid;
@@ -32,20 +32,21 @@ async fn create_buddy<S: BuddiesStore>(
     request: CreateBuddyRequest,
     mut handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::with_status(
-        "Unimplemented".to_string(),
-        http::StatusCode::NOT_IMPLEMENTED,
-    ))
+    // TODO: Error handling for warp
+    match handler.create_buddy(request) {
+        Ok(resp) => Ok(warp::reply::json(&resp)),
+        Err(_e) => Err(warp::reject::not_found()),
+    }
 }
 
 async fn get_buddies<S: BuddiesStore>(
     user_id: Uuid,
     handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::with_status(
-        "Unimplemented".to_string(),
-        http::StatusCode::NOT_IMPLEMENTED,
-    ))
+    match handler.get_buddies(GetBuddiesRequest { user_id }) {
+        Ok(resp) => Ok(warp::reply::json(&resp)),
+        Err(_e) => Err(warp::reject::not_found()),
+    }
 }
 
 async fn archive_buddy<S: BuddiesStore>(

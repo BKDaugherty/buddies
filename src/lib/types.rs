@@ -17,6 +17,8 @@ pub struct Datestamp(pub String);
 pub struct Buddy {
     /// A unique id for your buddy
     pub id: Uuid,
+    /// The human readable name of your buddy
+    pub name: String,
     /// The birthday of your buddy
     pub birthday: Option<Datestamp>,
     /// The frequency with which you'd like to talk to your buddy
@@ -46,6 +48,8 @@ pub struct ArchiveInteractionRequest {}
 pub struct CreateBuddyRequest {
     /// The id of the user who is asking to register a buddy
     pub user_id: Uuid,
+    /// The human readable name of your buddy
+    pub name: String,
     /// The birthday of your buddy
     pub birthday: Option<Datestamp>,
     /// The frequency with which you'd like to talk to your buddy
