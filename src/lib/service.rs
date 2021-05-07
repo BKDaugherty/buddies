@@ -3,8 +3,8 @@ use crate::lib::types::{
     ArchiveBuddyRequest, ArchiveBuddyResponse, ArchiveInteractionRequest,
     ArchiveInteractionResponse, Buddy, CreateBuddyRequest, CreateBuddyResponse,
     CreateInteractionRequest, CreateInteractionResponse, Datestamp, GetUserDataRequest,
-    GetUserDataResponse, Location, LoginRequest, LoginResponse, SignUpRequest, SignUpResponse,
-    Timestamp, UpdateBuddyRequest, UpdateBuddyResponse, UpdateInteractionRequest,
+    GetUserDataResponse, Interaction, Location, LoginRequest, LoginResponse, SignUpRequest,
+    SignUpResponse, Timestamp, UpdateBuddyRequest, UpdateBuddyResponse, UpdateInteractionRequest,
     UpdateInteractionResponse,
 };
 use anyhow::{Context, Result};
@@ -91,7 +91,11 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
             .get_buddies(request.user_id)
             .context("getting buddies")?;
 
-        let interactions = HashMap::new();
+        let interactions = self
+            .storage
+            .get_interactions(request.user_id)
+            .context("getting interactions")?;
+
         Ok(GetUserDataResponse {
             buddies,
             interactions,
@@ -108,7 +112,27 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
         &mut self,
         request: CreateInteractionRequest,
     ) -> Result<CreateInteractionResponse> {
-        todo!()
+        let interaction_id = Uuid::new_v4();
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        let date_time = NaiveDateTime::from_timestamp(now.try_into().unwrap(), 0);
+        let interaction = Interaction {
+            id: interaction_id,
+            notes: request.notes,
+            user_id: request.user_id,
+            date: request.date,
+	    participants: request.participants,
+            create_timestamp: Timestamp(now),
+            last_update_timestamp: Timestamp(now),
+            delete_timestamp: None,
+        };
+
+        self.storage
+            .create_interaction(interaction.clone())
+            .context(format!("Creating interaction with id {}", interaction_id))?;
+
+        Ok(CreateInteractionResponse { interaction })
     }
     fn update_interaction(
         &mut self,

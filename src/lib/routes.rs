@@ -72,10 +72,10 @@ async fn create_interaction<S: BuddiesStore>(
     request: CreateInteractionRequest,
     mut handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::with_status(
-        "Unimplemented".to_string(),
-        http::StatusCode::NOT_IMPLEMENTED,
-    ))
+    match handler.create_interaction(request) {
+        Ok(resp) => Ok(warp::reply::json(&resp)),
+        Err(_e) => Err(warp::reject::not_found()),
+    }
 }
 
 async fn archive_interaction<S: BuddiesStore>(

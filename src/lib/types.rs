@@ -1,6 +1,6 @@
 use chrono::naive::NaiveDate;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -40,7 +40,22 @@ pub struct Buddy {
 }
 
 #[derive(Debug, Clone, Queryable, Serialize, Deserialize)]
-pub struct Interaction {}
+pub struct Interaction {
+    pub id: Uuid,
+    /// General notes about the interaction
+    pub notes: String,
+    /// The participants involved
+    pub participants: HashSet<Uuid>,
+    /// The date in which this happened
+    pub date: Option<Datestamp>,
+    /// The time in which this interaction was registered in the DB
+    pub create_timestamp: Timestamp,
+    /// The last time this record was updated
+    pub last_update_timestamp: Timestamp,
+    /// The time in which this interaction was deleted
+    pub delete_timestamp: Option<Timestamp>,
+    pub user_id: Uuid,
+}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct ArchiveBuddyRequest {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
@@ -63,7 +78,16 @@ pub struct CreateBuddyRequest {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct CreateInteractionRequest {}
+pub struct CreateInteractionRequest {
+    /// The id of the user who is asking to create an interaction
+    pub user_id: Uuid,
+    /// General notes about the interaction
+    pub notes: String,
+    /// The participants involved
+    pub participants: HashSet<Uuid>,
+    /// The date in which this happened
+    pub date: Option<Datestamp>,
+}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct GetUserDataRequest {
     pub user_id: Uuid,
@@ -86,8 +110,10 @@ pub struct CreateBuddyResponse {
     /// The buddy you just created
     pub buddy: Buddy,
 }
-#[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct CreateInteractionResponse {}
+#[derive(Debug, Clone, Deserialize, Queryable, Serialize)]
+pub struct CreateInteractionResponse {
+    pub interaction: Interaction,
+}
 #[derive(Debug, Clone, Deserialize, Queryable, Serialize)]
 pub struct GetUserDataResponse {
     /// Map from buddy_id to buddy object
