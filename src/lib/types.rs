@@ -39,6 +39,8 @@ pub struct Buddy {
     pub user_id: Uuid,
 }
 
+#[derive(Debug, Clone, Queryable, Serialize, Deserialize)]
+pub struct Interaction {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct ArchiveBuddyRequest {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
@@ -63,11 +65,9 @@ pub struct CreateBuddyRequest {
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct CreateInteractionRequest {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct GetBuddiesRequest {
+pub struct GetUserDataRequest {
     pub user_id: Uuid,
 }
-#[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct GetInteractionsRequest {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct LoginRequest {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
@@ -89,12 +89,11 @@ pub struct CreateBuddyResponse {
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct CreateInteractionResponse {}
 #[derive(Debug, Clone, Deserialize, Queryable, Serialize)]
-pub struct GetBuddiesResponse {
+pub struct GetUserDataResponse {
     /// Map from buddy_id to buddy object
     pub buddies: HashMap<Uuid, Buddy>,
+    pub interactions: HashMap<Uuid, Interaction>,
 }
-#[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct GetInteractionsResponse {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct LoginResponse {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]

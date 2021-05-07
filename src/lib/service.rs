@@ -2,13 +2,14 @@ use crate::lib::storage::BuddiesStore;
 use crate::lib::types::{
     ArchiveBuddyRequest, ArchiveBuddyResponse, ArchiveInteractionRequest,
     ArchiveInteractionResponse, Buddy, CreateBuddyRequest, CreateBuddyResponse,
-    CreateInteractionRequest, CreateInteractionResponse, Datestamp, GetBuddiesRequest,
-    GetBuddiesResponse, GetInteractionsRequest, GetInteractionsResponse, Location, LoginRequest,
-    LoginResponse, SignUpRequest, SignUpResponse, Timestamp, UpdateBuddyRequest,
-    UpdateBuddyResponse, UpdateInteractionRequest, UpdateInteractionResponse,
+    CreateInteractionRequest, CreateInteractionResponse, Datestamp, GetUserDataRequest,
+    GetUserDataResponse, Location, LoginRequest, LoginResponse, SignUpRequest, SignUpResponse,
+    Timestamp, UpdateBuddyRequest, UpdateBuddyResponse, UpdateInteractionRequest,
+    UpdateInteractionResponse,
 };
 use anyhow::{Context, Result};
 use chrono::{NaiveDate, NaiveDateTime};
+use std::collections::HashMap;
 use std::convert::TryInto;
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -19,16 +20,15 @@ pub trait BuddiesService: Send + Sync + Clone + 'static {
 
     // Buddy CRUD
     fn create_buddy(&mut self, request: CreateBuddyRequest) -> Result<CreateBuddyResponse>;
-    fn get_buddies(&self, request: GetBuddiesRequest) -> Result<GetBuddiesResponse>;
     fn update_buddy(&mut self, request: UpdateBuddyRequest) -> Result<UpdateBuddyResponse>;
     fn archive_buddy(&mut self, request: ArchiveBuddyRequest) -> Result<ArchiveBuddyResponse>;
+    fn get_user_data(&self, request: GetUserDataRequest) -> Result<GetUserDataResponse>;
 
     // Interaction CRUD
     fn create_interaction(
         &mut self,
         request: CreateInteractionRequest,
     ) -> Result<CreateInteractionResponse>;
-    fn get_interactions(&self, request: GetInteractionsRequest) -> Result<GetInteractionsResponse>;
     fn update_interaction(
         &mut self,
         request: UpdateInteractionRequest,
@@ -84,13 +84,18 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
 
         Ok(CreateBuddyResponse { buddy })
     }
-    fn get_buddies(&self, request: GetBuddiesRequest) -> Result<GetBuddiesResponse> {
+
+    fn get_user_data(&self, request: GetUserDataRequest) -> Result<GetUserDataResponse> {
         let buddies = self
             .storage
             .get_buddies(request.user_id)
-            .context(format!("getting buddies under id {}", request.user_id))?;
+            .context("getting buddies")?;
 
-        Ok(GetBuddiesResponse { buddies })
+        let interactions = HashMap::new();
+        Ok(GetUserDataResponse {
+            buddies,
+            interactions,
+        })
     }
     fn update_buddy(&mut self, request: UpdateBuddyRequest) -> Result<UpdateBuddyResponse> {
         todo!()
@@ -103,9 +108,6 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
         &mut self,
         request: CreateInteractionRequest,
     ) -> Result<CreateInteractionResponse> {
-        todo!()
-    }
-    fn get_interactions(&self, request: GetInteractionsRequest) -> Result<GetInteractionsResponse> {
         todo!()
     }
     fn update_interaction(

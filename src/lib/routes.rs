@@ -1,7 +1,7 @@
 use crate::lib::service::{BuddiesService, RequestHandler};
 use crate::lib::storage::BuddiesStore;
 use crate::lib::types::{
-    CreateBuddyRequest, CreateInteractionRequest, GetBuddiesRequest, LoginRequest, SignUpRequest,
+    CreateBuddyRequest, CreateInteractionRequest, GetUserDataRequest, LoginRequest, SignUpRequest,
     UpdateBuddyRequest, UpdateInteractionRequest,
 };
 
@@ -39,18 +39,17 @@ async fn create_buddy<S: BuddiesStore>(
     }
 }
 
-async fn get_buddies<S: BuddiesStore>(
+async fn get_user_data<S: BuddiesStore>(
     user_id: Uuid,
     handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    match handler.get_buddies(GetBuddiesRequest { user_id }) {
+    match handler.get_user_data(GetUserDataRequest { user_id }) {
         Ok(resp) => Ok(warp::reply::json(&resp)),
         Err(_e) => Err(warp::reject::not_found()),
     }
 }
 
 async fn archive_buddy<S: BuddiesStore>(
-    buddy_id: Uuid,
     mut handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     Ok(warp::reply::with_status(
@@ -79,18 +78,7 @@ async fn create_interaction<S: BuddiesStore>(
     ))
 }
 
-async fn get_interactions<S: BuddiesStore>(
-    user_id: Uuid,
-    handler: RequestHandler<S>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::with_status(
-        "Unimplemented".to_string(),
-        http::StatusCode::NOT_IMPLEMENTED,
-    ))
-}
-
 async fn archive_interaction<S: BuddiesStore>(
-    interaction_id: Uuid,
     mut handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     Ok(warp::reply::with_status(
@@ -137,6 +125,7 @@ pub fn build_warp_routes<S: BuddiesStore>(
 
     let create_buddy = warp::post()
         .and(warp::path("buddy"))
+        .and(warp::path("create"))
         // Only accept bodies smaller than 16kb... (because warp said so)
         // https://github.com/seanmonstar/warp/blob/master/examples/body.rs
         .and(warp::body::content_length_limit(1024 * 16))
@@ -144,63 +133,57 @@ pub fn build_warp_routes<S: BuddiesStore>(
         .and(handler_filter.clone())
         .and_then(create_buddy);
 
-    let archive_buddy = warp::put()
+    let archive_buddy = warp::post()
         .and(warp::path("buddy"))
         .and(warp::path("archive"))
-        .and(warp::path::param::<Uuid>())
         .and(handler_filter.clone())
         .and_then(archive_buddy);
 
-    let update_buddy = warp::put()
+    let update_buddy = warp::post()
         .and(warp::path("buddy"))
+        .and(warp::path("update"))
         .and(warp::body::content_length_limit(1024 * 16))
         .and(warp::body::json())
         .and(handler_filter.clone())
         .and_then(update_buddy);
 
-    let get_buddies = warp::get()
-        .and(warp::path("buddies"))
-        .and(warp::path::param::<Uuid>())
-        .and(handler_filter.clone())
-        .and_then(get_buddies);
-
     let create_interaction = warp::post()
         .and(warp::path("interaction"))
+        .and(warp::path("create"))
         .and(warp::body::content_length_limit(1024 * 16))
         .and(warp::body::json())
         .and(handler_filter.clone())
         .and_then(create_interaction);
 
-    let archive_interaction = warp::put()
+    let archive_interaction = warp::post()
         .and(warp::path("interaction"))
         .and(warp::path("archive"))
-        .and(warp::path::param::<Uuid>())
         .and(handler_filter.clone())
         .and_then(archive_interaction);
 
-    let update_interaction = warp::put()
+    let update_interaction = warp::post()
         .and(warp::path("interaction"))
+        .and(warp::path("update"))
         .and(warp::body::content_length_limit(1024 * 16))
         .and(warp::body::json())
         .and(handler_filter.clone())
         .and_then(update_interaction);
 
-    let get_interactions = warp::get()
-        .and(warp::path("interactions"))
+    let get_user_data = warp::get()
+        .and(warp::path("user"))
         .and(warp::path::param::<Uuid>())
         .and(handler_filter.clone())
-        .and_then(get_interactions);
+        .and_then(get_user_data);
 
     let routes = login
         .or(sign_up)
         .or(create_buddy)
         .or(update_buddy)
-        .or(get_buddies)
         .or(archive_buddy)
         .or(create_interaction)
         .or(update_interaction)
-        .or(get_interactions)
         .or(archive_interaction)
+        .or(get_user_data)
         .with(cors)
         .boxed();
     routes
