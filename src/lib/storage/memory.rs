@@ -1,8 +1,9 @@
 use super::traits::BuddiesStore;
-use crate::lib::types::{Buddy, Interaction};
+use crate::lib::types::{Buddy, Interaction, Timestamp};
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+use std::time::SystemTime;
 use uuid::Uuid;
 
 /// In memory storage for testing
@@ -20,6 +21,22 @@ impl MemoryBuddiesStore {
             buddy_storage: Arc::new(RwLock::new(HashMap::new())),
             interaction_storage: Arc::new(RwLock::new(HashMap::new())),
         }
+    }
+    pub fn get_buddy(&self, buddy_id: &Uuid) -> Result<Buddy> {
+        self.buddy_storage
+            .read()
+            .unwrap()
+            .get(buddy_id)
+            .context(format!("Looking for note with id {}", buddy_id))
+            .map(|x| x.clone())
+    }
+    pub fn get_interaction(&self, interaction_id: &Uuid) -> Result<Interaction> {
+        self.interaction_storage
+            .read()
+            .unwrap()
+            .get(interaction_id)
+            .context(format!("Looking for note with id {}", interaction_id))
+            .map(|x| x.clone())
     }
 }
 
@@ -58,11 +75,23 @@ impl BuddiesStore for MemoryBuddiesStore {
         }
         Ok(users_interactions)
     }
-    fn archive_buddy(&mut self, id: Uuid, user_id: Uuid) -> Result<()> {
-        todo!()
+    fn archive_buddy(&mut self, id: Uuid, _user_id: Uuid) -> Result<()> {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        let mut buddy = self.get_buddy(&id).context("getting note to update")?;
+        buddy.delete_timestamp = Some(Timestamp(now));
+        Ok(())
     }
 
-    fn archive_interaction(&mut self, id: Uuid, user_id: Uuid) -> Result<()> {
-        todo!()
+    fn archive_interaction(&mut self, id: Uuid, _user_id: Uuid) -> Result<()> {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        let mut interaction = self
+            .get_interaction(&id)
+            .context("getting note to update")?;
+        interaction.delete_timestamp = Some(Timestamp(now));
+        Ok(())
     }
 }
