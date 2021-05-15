@@ -1,8 +1,9 @@
 use super::schema::{buddies, interactions};
 use crate::lib::types::{Buddy, Datestamp, Interaction, Location, Timestamp};
-use anyhow::{anyhow, Context};
+use anyhow::{anyhow, Context, Result};
 use std::collections::HashSet;
 use std::convert::TryFrom;
+use std::time::SystemTime;
 use uuid::Uuid;
 
 /// Our DB representation of a buddy
@@ -73,6 +74,30 @@ pub struct NewBuddy {
     pub user_uuid: String,
 }
 
+#[derive(AsChangeset, Default)]
+#[table_name = "buddies"]
+pub struct DBUpdateBuddy {
+    pub last_update_timestamp: String,
+    pub name: Option<String>,
+    pub notes: Option<String>,
+    pub last_contacted: Option<String>,
+    pub location: Option<String>,
+    pub delete_timestamp: Option<String>,
+}
+
+impl DBUpdateBuddy {
+    pub fn archive() -> Result<Self> {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        Ok(Self {
+            last_update_timestamp: format!("{}", now),
+            delete_timestamp: Some(format!("{}", now)),
+            ..DBUpdateBuddy::default()
+        })
+    }
+}
+
 impl TryFrom<Buddy> for NewBuddy {
     type Error = anyhow::Error;
     fn try_from(buddy: Buddy) -> Result<Self, Self::Error> {
@@ -114,6 +139,29 @@ pub struct NewInteraction {
     pub create_timestamp: String,
     pub last_update_timestamp: String,
     pub user_uuid: String,
+}
+
+#[derive(AsChangeset, Default)]
+#[table_name = "interactions"]
+pub struct DBUpdateInteraction {
+    pub last_update_timestamp: String,
+    pub notes: Option<String>,
+    pub date: Option<String>,
+    pub participants: Option<Vec<String>>,
+    pub delete_timestamp: Option<String>,
+}
+
+impl DBUpdateInteraction {
+    pub fn archive() -> Result<Self> {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        Ok(Self {
+            last_update_timestamp: format!("{}", now),
+            delete_timestamp: Some(format!("{}", now)),
+            ..DBUpdateInteraction::default()
+        })
+    }
 }
 
 impl TryFrom<Interaction> for NewInteraction {

@@ -1,4 +1,6 @@
-use super::models::{DBBuddy, DBInteraction, NewBuddy, NewInteraction};
+use super::models::{
+    DBBuddy, DBInteraction, DBUpdateBuddy, DBUpdateInteraction, NewBuddy, NewInteraction,
+};
 use super::schema::{buddies, interactions};
 use crate::lib::storage::traits::BuddiesStore;
 use crate::lib::types::{Buddy, Interaction};
@@ -108,9 +110,29 @@ impl BuddiesStore for PsqlBuddiesStore {
         Ok(resulting_map)
     }
     fn archive_buddy(&mut self, id: Uuid, user_id: Uuid) -> Result<()> {
-        todo!()
+        let conn = self.get_db_conn()?;
+        let update = DBUpdateBuddy::archive().context("Creating archive buddy request")?;
+        diesel::update(
+            buddies::dsl::buddies
+                .filter(buddies::dsl::uuid.eq(id.to_string()))
+                .filter(buddies::dsl::user_uuid.eq(user_id.to_string())),
+        )
+        .set(&update)
+        .execute(&conn)
+        .context(format!("Archiving buddy {} {}", id, user_id))?;
+        Ok(())
     }
     fn archive_interaction(&mut self, id: Uuid, user_id: Uuid) -> Result<()> {
-        todo!()
+        let conn = self.get_db_conn()?;
+        let update = DBUpdateInteraction::archive().context("Creating archive interaction request")?;
+        diesel::update(
+            interactions::dsl::interactions
+                .filter(interactions::dsl::uuid.eq(id.to_string()))
+                .filter(interactions::dsl::user_uuid.eq(user_id.to_string())),
+        )
+        .set(&update)
+        .execute(&conn)
+            .context(format!("Archiving interaction {} {}", id, user_id))?;
+        Ok(())
     }
 }
