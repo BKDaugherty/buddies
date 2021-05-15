@@ -70,7 +70,7 @@ pub struct NewBuddy {
     pub birthday: Option<String>,
     pub create_timestamp: String,
     pub last_update_timestamp: String,
-    pub user_id: String,
+    pub user_uuid: String,
 }
 
 impl TryFrom<Buddy> for NewBuddy {
@@ -85,7 +85,7 @@ impl TryFrom<Buddy> for NewBuddy {
             last_update_timestamp: buddy.last_update_timestamp.0.to_string(),
             birthday: buddy.birthday.map(|b| b.0),
             location: buddy.location.map(|b| b.0),
-            user_id: buddy.user_id.to_string(),
+            user_uuid: buddy.user_id.to_string(),
         })
     }
 }
