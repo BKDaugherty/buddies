@@ -1,11 +1,11 @@
-use super::schema::buddies;
-use crate::lib::types::{Buddy, Datestamp, Location, Timestamp};
+use super::schema::{buddies, interactions};
+use crate::lib::types::{Buddy, Datestamp, Interaction, Location, Timestamp};
 use anyhow::{anyhow, Context};
 use std::collections::HashSet;
 use std::convert::TryFrom;
 use uuid::Uuid;
 
-/// Our DB representaiton of a buddy
+/// Our DB representation of a buddy
 #[derive(Queryable)]
 pub struct DBBuddy {
     pub id: i32,
@@ -86,6 +86,99 @@ impl TryFrom<Buddy> for NewBuddy {
             birthday: buddy.birthday.map(|b| b.0),
             location: buddy.location.map(|b| b.0),
             user_uuid: buddy.user_id.to_string(),
+        })
+    }
+}
+
+/// Our DB repr of an interaction
+#[derive(Queryable)]
+pub struct DBInteraction {
+    pub id: i32,
+    pub uuid: String,
+    pub notes: String,
+    pub participants: Vec<String>,
+    pub date: Option<String>,
+    pub create_timestamp: String,
+    pub last_update_timestamp: String,
+    pub delete_timestamp: Option<String>,
+    pub user_uuid: String,
+}
+
+#[derive(Insertable)]
+#[table_name = "interactions"]
+pub struct NewInteraction {
+    pub uuid: String,
+    pub notes: String,
+    pub participants: Vec<String>,
+    pub date: Option<String>,
+    pub create_timestamp: String,
+    pub last_update_timestamp: String,
+    pub user_uuid: String,
+}
+
+impl TryFrom<Interaction> for NewInteraction {
+    type Error = anyhow::Error;
+    fn try_from(interaction: Interaction) -> Result<Self, Self::Error> {
+        let mut participants = Vec::new();
+        for p in interaction.participants {
+            participants.push(p.to_string())
+        }
+
+        Ok(NewInteraction {
+            uuid: interaction.id.to_string(),
+            notes: interaction.notes,
+            participants,
+            date: interaction.date.map(|d| d.0),
+            create_timestamp: interaction.create_timestamp.0.to_string(),
+            last_update_timestamp: interaction.last_update_timestamp.0.to_string(),
+            user_uuid: interaction.user_id.to_string(),
+        })
+    }
+}
+
+impl TryFrom<DBInteraction> for Interaction {
+    type Error = anyhow::Error;
+
+    fn try_from(interaction: DBInteraction) -> Result<Self, Self::Error> {
+        let id = Uuid::parse_str(&interaction.uuid).context("Parsing interaction id")?;
+        let user_id =
+            Uuid::parse_str(&interaction.user_uuid).context("parsing interaction's user id")?;
+        let delete_timestamp = match interaction.delete_timestamp {
+            Some(x) => Some(Timestamp(x.parse().context("Parsing delete timestamp")?)),
+            None => None,
+        };
+
+        let mut participants = HashSet::new();
+        for p in interaction.participants {
+            let p_uuid =
+                Uuid::parse_str(&p).context("Parsing uuid for participant of interaction")?;
+            if participants.contains(&p_uuid) {
+                return Err(anyhow!(
+                    "Interaction {} has duplicate participants!",
+                    interaction.uuid
+                ));
+            }
+            participants.insert(p_uuid);
+        }
+        Ok(Interaction {
+            id,
+            notes: interaction.notes,
+            participants,
+            date: interaction.date.map(Datestamp),
+            create_timestamp: Timestamp(
+                interaction
+                    .create_timestamp
+                    .parse()
+                    .context("parsing create timestamp")?,
+            ),
+            last_update_timestamp: Timestamp(
+                interaction
+                    .last_update_timestamp
+                    .parse()
+                    .context("parsing last_update timestamp")?,
+            ),
+            delete_timestamp,
+            user_id,
         })
     }
 }

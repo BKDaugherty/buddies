@@ -1,5 +1,5 @@
-use super::models::{DBBuddy, NewBuddy};
-use super::schema::buddies;
+use super::models::{DBBuddy, NewBuddy, DBInteraction, NewInteraction};
+use super::schema::{buddies, interactions};
 use crate::lib::storage::traits::BuddiesStore;
 use crate::lib::types::{Buddy, Interaction};
 use anyhow::{anyhow, Context, Result};
@@ -53,7 +53,20 @@ impl BuddiesStore for PsqlBuddiesStore {
         Ok(())
     }
     fn create_interaction(&mut self, interaction: Interaction) -> Result<()> {
-        todo!()
+        let conn = self.get_db_conn()?;
+        let interaction_uuid = interaction.id.clone();
+        let new_interaction_request = NewInteraction::try_from(interaction).context(format!(
+            "attempting to create insert statement for interaction with uuid {}",
+            interaction_uuid
+        ))?;
+        diesel::insert_into(interactions::table)
+            .values(&new_interaction_request)
+            .execute(&conn)
+            .context(format!(
+                "Error attempting to persist interaction in db with uuid {}",
+                interaction_uuid
+            ))?;
+        Ok(())
     }
     fn get_buddies(&self, user_id: Uuid) -> Result<HashMap<Uuid, Buddy>> {
         let user_id_string = user_id.to_string();
@@ -76,6 +89,22 @@ impl BuddiesStore for PsqlBuddiesStore {
         Ok(resulting_map)
     }
     fn get_interactions(&self, user_id: Uuid) -> Result<HashMap<Uuid, Interaction>> {
-        todo!()
+        let user_id_string = user_id.to_string();
+        let conn = self.get_db_conn()?;
+        let db_interactions = interactions::dsl::interactions
+            .filter(interactions::dsl::user_uuid.eq(&user_id_string))
+            .load::<DBInteraction>(&conn)
+            .context(format!("Looking for user {}", user_id_string))?;
+        let mut resulting_map = HashMap::new();
+        let interactions: Vec<Interaction> = db_interactions
+            .into_iter()
+            .map(|db_interaction| Interaction::try_from(db_interaction))
+            .collect::<Result<Vec<Interaction>>>()
+            .context(format!("Reading interactions for {}", user_id_string))?;
+        // TODO Stop the attack of the clones
+        for interaction in interactions {
+            resulting_map.insert(interaction.id.clone(), interaction.clone());
+        }
+        Ok(resulting_map)
     }
 }
