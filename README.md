@@ -8,6 +8,17 @@ If you don't already have Rust and Cargo, install it through rustup [by followin
 ## Development
 To figure out how to boot up the server, run `cargo run -- --help` in the root of the project.
 
+### Database
+```
+$ export DATABASE_URL=``
+$ diesel migration run
+```
+
+#### Setup Heroku DB
+```
+$ export DATABASE_URL=`heroku pg:credentials:url DATABASE -a buddies-backend | grep "://" | xargs`
+$ diesel migration run
+```
 ## Code Structure
 
 Here's a quick rundown of the structure of the application. I pulled most of the boilerplate from my [notes application which you can see here](https://github.com/BKDaugherty/notes)

@@ -3,7 +3,7 @@ use clap::arg_enum;
 use env_logger::Env;
 use lib::routes::build_warp_routes;
 use lib::service::RequestHandler;
-use lib::storage::MemoryBuddiesStore;
+use lib::storage::{MemoryBuddiesStore, PsqlBuddiesStore};
 use log::info;
 use std::env;
 use structopt::StructOpt;
@@ -65,7 +65,12 @@ async fn main() -> Result<()> {
     // TODO --> Can I make these not required to be clone?
     match args.storage_type {
         Storage::Psql => {
-            todo!()
+            info!("Connecting to database at url: {}", args.database_url);
+            let buddies_store = PsqlBuddiesStore::new(&args.database_url);
+            let handler = RequestHandler::new(buddies_store);
+            let routes = build_warp_routes(handler);
+            info!("Running server on port {}", port);
+            warp::serve(routes).run(([0, 0, 0, 0], port)).await;
         }
         Storage::Memory => {
             info!("Using Memory Storage. Note, no information will be saved!");
