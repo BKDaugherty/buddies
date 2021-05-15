@@ -58,4 +58,11 @@ impl BuddiesStore for MemoryBuddiesStore {
         }
         Ok(users_interactions)
     }
+    fn archive_buddy(&mut self, id: Uuid, user_id: Uuid) -> Result<()> {
+        todo!()
+    }
+
+    fn archive_interaction(&mut self, id: Uuid, user_id: Uuid) -> Result<()> {
+        todo!()
+    }
 }

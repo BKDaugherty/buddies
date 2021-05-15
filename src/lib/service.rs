@@ -105,7 +105,10 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
         todo!()
     }
     fn archive_buddy(&mut self, request: ArchiveBuddyRequest) -> Result<ArchiveBuddyResponse> {
-        todo!()
+        self.storage
+            .archive_buddy(request.id, request.user_id)
+            .context("Attempting to archive buddy")?;
+        Ok(ArchiveBuddyResponse {})
     }
 
     fn create_interaction(
@@ -122,7 +125,7 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
             notes: request.notes,
             user_id: request.user_id,
             date: request.date,
-	    participants: request.participants,
+            participants: request.participants,
             create_timestamp: Timestamp(now),
             last_update_timestamp: Timestamp(now),
             delete_timestamp: None,
@@ -144,6 +147,9 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
         &mut self,
         request: ArchiveInteractionRequest,
     ) -> Result<ArchiveInteractionResponse> {
-        todo!()
+        self.storage
+            .archive_interaction(request.id, request.user_id)
+            .context("Attempting to archive interaction")?;
+        Ok(ArchiveInteractionResponse {})
     }
 }

@@ -5,7 +5,9 @@ use uuid::Uuid;
 
 pub trait BuddiesStore: Send + Sync + Clone + 'static {
     fn create_buddy(&mut self, buddy: Buddy) -> Result<()>;
+    fn archive_buddy(&mut self, id: Uuid, user_id: Uuid) -> Result<()>;
     fn create_interaction(&mut self, interaction: Interaction) -> Result<()>;
+    fn archive_interaction(&mut self, id: Uuid, user_id: Uuid) -> Result<()>;
     fn get_buddies(&self, user_id: Uuid) -> Result<HashMap<Uuid, Buddy>>;
     fn get_interactions(&self, user_id: Uuid) -> Result<HashMap<Uuid, Interaction>>;
 }

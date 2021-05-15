@@ -57,9 +57,15 @@ pub struct Interaction {
     pub user_id: Uuid,
 }
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct ArchiveBuddyRequest {}
+pub struct ArchiveBuddyRequest {
+    pub id: Uuid,
+    pub user_id: Uuid,
+}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct ArchiveInteractionRequest {}
+pub struct ArchiveInteractionRequest {
+    pub id: Uuid,
+    pub user_id: Uuid,
+}
 
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct CreateBuddyRequest {

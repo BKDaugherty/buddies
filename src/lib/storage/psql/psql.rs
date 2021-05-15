@@ -1,4 +1,4 @@
-use super::models::{DBBuddy, NewBuddy, DBInteraction, NewInteraction};
+use super::models::{DBBuddy, DBInteraction, NewBuddy, NewInteraction};
 use super::schema::{buddies, interactions};
 use crate::lib::storage::traits::BuddiesStore;
 use crate::lib::types::{Buddy, Interaction};
@@ -106,5 +106,11 @@ impl BuddiesStore for PsqlBuddiesStore {
             resulting_map.insert(interaction.id.clone(), interaction.clone());
         }
         Ok(resulting_map)
+    }
+    fn archive_buddy(&mut self, id: Uuid, user_id: Uuid) -> Result<()> {
+        todo!()
+    }
+    fn archive_interaction(&mut self, id: Uuid, user_id: Uuid) -> Result<()> {
+        todo!()
     }
 }
