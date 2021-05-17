@@ -2,7 +2,7 @@ use crate::lib::service::{BuddiesService, RequestHandler};
 use crate::lib::storage::BuddiesStore;
 use crate::lib::types::{
     CreateBuddyRequest, CreateInteractionRequest, GetUserDataRequest, LoginRequest, SignUpRequest,
-    UpdateBuddyRequest, UpdateInteractionRequest,
+    UpdateBuddyRequest, UpdateInteractionRequest, ArchiveInteractionRequest, ArchiveBuddyRequest
 };
 
 use uuid::Uuid;
@@ -50,12 +50,13 @@ async fn get_user_data<S: BuddiesStore>(
 }
 
 async fn archive_buddy<S: BuddiesStore>(
+    request: ArchiveBuddyRequest,
     mut handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::with_status(
-        "Unimplemented".to_string(),
-        http::StatusCode::NOT_IMPLEMENTED,
-    ))
+    match handler.archive_buddy(request) {
+        Ok(resp) => Ok(warp::reply::json(&resp)),
+        Err(_e) => Err(warp::reject::not_found()),
+    }
 }
 
 async fn update_buddy<S: BuddiesStore>(
@@ -79,12 +80,13 @@ async fn create_interaction<S: BuddiesStore>(
 }
 
 async fn archive_interaction<S: BuddiesStore>(
+    request: ArchiveInteractionRequest,
     mut handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::with_status(
-        "Unimplemented".to_string(),
-        http::StatusCode::NOT_IMPLEMENTED,
-    ))
+    match handler.archive_interaction(request) {
+        Ok(resp) => Ok(warp::reply::json(&resp)),
+        Err(_e) => Err(warp::reject::not_found()),
+    }
 }
 
 async fn update_interaction<S: BuddiesStore>(
@@ -136,6 +138,8 @@ pub fn build_warp_routes<S: BuddiesStore>(
     let archive_buddy = warp::post()
         .and(warp::path("buddy"))
         .and(warp::path("archive"))
+	.and(warp::body::content_length_limit(1024 * 16))
+        .and(warp::body::json())
         .and(handler_filter.clone())
         .and_then(archive_buddy);
 
@@ -158,6 +162,8 @@ pub fn build_warp_routes<S: BuddiesStore>(
     let archive_interaction = warp::post()
         .and(warp::path("interaction"))
         .and(warp::path("archive"))
+	.and(warp::body::content_length_limit(1024 * 16))
+        .and(warp::body::json())
         .and(handler_filter.clone())
         .and_then(archive_interaction);
 
