@@ -1,4 +1,4 @@
-use crate::lib::types::{Buddy, Interaction};
+use crate::lib::types::{Buddy, Interaction, UpdateBuddyRequest, UpdateInteractionRequest};
 use anyhow::Result;
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -10,4 +10,6 @@ pub trait BuddiesStore: Send + Sync + Clone + 'static {
     fn archive_interaction(&mut self, id: Uuid, user_id: Uuid) -> Result<()>;
     fn get_buddies(&self, user_id: Uuid) -> Result<HashMap<Uuid, Buddy>>;
     fn get_interactions(&self, user_id: Uuid) -> Result<HashMap<Uuid, Interaction>>;
+    fn update_buddy(&mut self, request: UpdateBuddyRequest) -> Result<()>;
+    fn update_interaction(&mut self, request: UpdateInteractionRequest) -> Result<()>;
 }

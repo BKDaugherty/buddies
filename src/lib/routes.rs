@@ -1,16 +1,16 @@
 use crate::lib::service::{BuddiesService, RequestHandler};
 use crate::lib::storage::BuddiesStore;
 use crate::lib::types::{
-    CreateBuddyRequest, CreateInteractionRequest, GetUserDataRequest, LoginRequest, SignUpRequest,
-    UpdateBuddyRequest, UpdateInteractionRequest, ArchiveInteractionRequest, ArchiveBuddyRequest
+    ArchiveBuddyRequest, ArchiveInteractionRequest, CreateBuddyRequest, CreateInteractionRequest,
+    GetUserDataRequest, LoginRequest, SignUpRequest, UpdateBuddyRequest, UpdateInteractionRequest,
 };
 
 use uuid::Uuid;
 use warp::{filters::BoxedFilter, http, Filter, Reply};
 
 async fn login<S: BuddiesStore>(
-    request: LoginRequest,
-    mut handler: RequestHandler<S>,
+    _request: LoginRequest,
+    _handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     Ok(warp::reply::with_status(
         "Unimplemented".to_string(),
@@ -19,8 +19,8 @@ async fn login<S: BuddiesStore>(
 }
 
 async fn sign_up<S: BuddiesStore>(
-    request: SignUpRequest,
-    mut handler: RequestHandler<S>,
+    _request: SignUpRequest,
+    _handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     Ok(warp::reply::with_status(
         "Unimplemented".to_string(),
@@ -63,10 +63,10 @@ async fn update_buddy<S: BuddiesStore>(
     request: UpdateBuddyRequest,
     mut handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::with_status(
-        "Unimplemented".to_string(),
-        http::StatusCode::NOT_IMPLEMENTED,
-    ))
+    match handler.update_buddy(request) {
+        Ok(resp) => Ok(warp::reply::json(&resp)),
+        Err(_e) => Err(warp::reject::not_found()),
+    }
 }
 
 async fn create_interaction<S: BuddiesStore>(
@@ -93,10 +93,10 @@ async fn update_interaction<S: BuddiesStore>(
     request: UpdateInteractionRequest,
     mut handler: RequestHandler<S>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::with_status(
-        "Unimplemented".to_string(),
-        http::StatusCode::NOT_IMPLEMENTED,
-    ))
+    match handler.update_interaction(request) {
+        Ok(resp) => Ok(warp::reply::json(&resp)),
+        Err(_e) => Err(warp::reject::not_found()),
+    }
 }
 
 /// This function links the service to warp's route handling
@@ -138,7 +138,7 @@ pub fn build_warp_routes<S: BuddiesStore>(
     let archive_buddy = warp::post()
         .and(warp::path("buddy"))
         .and(warp::path("archive"))
-	.and(warp::body::content_length_limit(1024 * 16))
+        .and(warp::body::content_length_limit(1024 * 16))
         .and(warp::body::json())
         .and(handler_filter.clone())
         .and_then(archive_buddy);
@@ -162,7 +162,7 @@ pub fn build_warp_routes<S: BuddiesStore>(
     let archive_interaction = warp::post()
         .and(warp::path("interaction"))
         .and(warp::path("archive"))
-	.and(warp::body::content_length_limit(1024 * 16))
+        .and(warp::body::content_length_limit(1024 * 16))
         .and(warp::body::json())
         .and(handler_filter.clone())
         .and_then(archive_interaction);

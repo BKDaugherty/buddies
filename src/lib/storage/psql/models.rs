@@ -1,5 +1,8 @@
 use super::schema::{buddies, interactions};
-use crate::lib::types::{Buddy, Datestamp, Interaction, Location, Timestamp};
+use crate::lib::types::{
+    Buddy, Datestamp, Interaction, Location, Timestamp, UpdateBuddyRequest,
+    UpdateInteractionRequest,
+};
 use anyhow::{anyhow, Context, Result};
 use std::collections::HashSet;
 use std::convert::TryFrom;
@@ -96,6 +99,19 @@ impl DBUpdateBuddy {
             ..DBUpdateBuddy::default()
         })
     }
+    pub fn update(request: UpdateBuddyRequest) -> Result<Self> {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        Ok(Self {
+            name: request.name,
+            notes: request.notes,
+            last_contacted: request.last_contacted.map(|x| x.0),
+            location: request.location.map(|x| x.0),
+            last_update_timestamp: format!("{}", now),
+            ..DBUpdateBuddy::default()
+        })
+    }
 }
 
 impl TryFrom<Buddy> for NewBuddy {
@@ -160,6 +176,30 @@ impl DBUpdateInteraction {
             last_update_timestamp: format!("{}", now),
             delete_timestamp: Some(format!("{}", now)),
             ..DBUpdateInteraction::default()
+        })
+    }
+
+    pub fn update(request: UpdateInteractionRequest) -> Result<Self> {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        let participants = match request.participants {
+            Some(participant_uuids) => {
+                let mut participants = Vec::new();
+                for uuid in participant_uuids {
+                    participants.push(uuid.to_string());
+                }
+                Some(participants)
+            }
+            None => None,
+        };
+
+        Ok(Self {
+            notes: request.notes,
+            date: request.date.map(|x| x.0),
+            participants,
+            last_update_timestamp: format!("{}", now),
+            delete_timestamp: None,
         })
     }
 }

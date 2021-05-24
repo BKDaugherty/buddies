@@ -3,13 +3,12 @@ use crate::lib::types::{
     ArchiveBuddyRequest, ArchiveBuddyResponse, ArchiveInteractionRequest,
     ArchiveInteractionResponse, Buddy, CreateBuddyRequest, CreateBuddyResponse,
     CreateInteractionRequest, CreateInteractionResponse, Datestamp, GetUserDataRequest,
-    GetUserDataResponse, Interaction, Location, LoginRequest, LoginResponse, SignUpRequest,
-    SignUpResponse, Timestamp, UpdateBuddyRequest, UpdateBuddyResponse, UpdateInteractionRequest,
+    GetUserDataResponse, Interaction, LoginRequest, LoginResponse, SignUpRequest, SignUpResponse,
+    Timestamp, UpdateBuddyRequest, UpdateBuddyResponse, UpdateInteractionRequest,
     UpdateInteractionResponse,
 };
 use anyhow::{Context, Result};
-use chrono::{NaiveDate, NaiveDateTime};
-use std::collections::HashMap;
+use chrono::NaiveDateTime;
 use std::convert::TryInto;
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -51,10 +50,10 @@ impl<S: BuddiesStore> RequestHandler<S> {
 }
 
 impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
-    fn login(&self, request: LoginRequest) -> Result<LoginResponse> {
+    fn login(&self, _request: LoginRequest) -> Result<LoginResponse> {
         todo!()
     }
-    fn sign_up(&mut self, request: SignUpRequest) -> Result<SignUpResponse> {
+    fn sign_up(&mut self, _request: SignUpRequest) -> Result<SignUpResponse> {
         todo!()
     }
 
@@ -101,16 +100,18 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
             interactions,
         })
     }
-    fn update_buddy(&mut self, request: UpdateBuddyRequest) -> Result<UpdateBuddyResponse> {
-        todo!()
-    }
     fn archive_buddy(&mut self, request: ArchiveBuddyRequest) -> Result<ArchiveBuddyResponse> {
         self.storage
             .archive_buddy(request.id, request.user_id)
             .context("Attempting to archive buddy")?;
         Ok(ArchiveBuddyResponse {})
     }
-
+    fn update_buddy(&mut self, request: UpdateBuddyRequest) -> Result<UpdateBuddyResponse> {
+        self.storage
+            .update_buddy(request)
+            .context("updating buddy")?;
+        Ok(UpdateBuddyResponse {})
+    }
     fn create_interaction(
         &mut self,
         request: CreateInteractionRequest,
@@ -119,7 +120,6 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)?
             .as_secs();
-        let date_time = NaiveDateTime::from_timestamp(now.try_into().unwrap(), 0);
         let interaction = Interaction {
             id: interaction_id,
             notes: request.notes,
@@ -141,7 +141,10 @@ impl<S: BuddiesStore> BuddiesService for RequestHandler<S> {
         &mut self,
         request: UpdateInteractionRequest,
     ) -> Result<UpdateInteractionResponse> {
-        todo!()
+        self.storage
+            .update_interaction(request)
+            .context("updating interaction")?;
+        Ok(UpdateInteractionResponse {})
     }
     fn archive_interaction(
         &mut self,

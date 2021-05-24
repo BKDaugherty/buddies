@@ -1,5 +1,7 @@
 use super::traits::BuddiesStore;
-use crate::lib::types::{Buddy, Interaction, Timestamp};
+use crate::lib::types::{
+    Buddy, Interaction, Timestamp, UpdateBuddyRequest, UpdateInteractionRequest,
+};
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -92,6 +94,47 @@ impl BuddiesStore for MemoryBuddiesStore {
             .get_interaction(&id)
             .context("getting note to update")?;
         interaction.delete_timestamp = Some(Timestamp(now));
+        Ok(())
+    }
+    fn update_buddy(&mut self, request: UpdateBuddyRequest) -> Result<()> {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        let mut buddy = self
+            .get_buddy(&request.buddy_id)
+            .context("getting note to update")?;
+        if let Some(name) = request.name {
+            buddy.name = name;
+        }
+        if let Some(notes) = request.notes {
+            buddy.notes = notes;
+        }
+        if let Some(last_contacted) = request.last_contacted {
+            buddy.last_contacted = last_contacted;
+        }
+        if let Some(location) = request.location {
+            buddy.location = Some(location);
+        }
+        buddy.last_update_timestamp = Timestamp(now);
+        Ok(())
+    }
+    fn update_interaction(&mut self, request: UpdateInteractionRequest) -> Result<()> {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        let mut interaction = self
+            .get_interaction(&request.interaction_id)
+            .context("getting note to update")?;
+        interaction.last_update_timestamp = Timestamp(now);
+        if let Some(notes) = request.notes {
+            interaction.notes = notes;
+        }
+        if let Some(date) = request.date {
+            interaction.date = Some(date);
+        }
+        if let Some(participants) = request.participants {
+            interaction.participants = participants;
+        }
         Ok(())
     }
 }

@@ -1,4 +1,3 @@
-use chrono::naive::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
@@ -103,9 +102,22 @@ pub struct LoginRequest {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct SignUpRequest {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct UpdateBuddyRequest {}
+pub struct UpdateBuddyRequest {
+    pub user_id: Uuid,
+    pub buddy_id: Uuid,
+    pub name: Option<String>,
+    pub notes: Option<String>,
+    pub last_contacted: Option<Datestamp>,
+    pub location: Option<Location>,
+}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct UpdateInteractionRequest {}
+pub struct UpdateInteractionRequest {
+    pub user_id: Uuid,
+    pub interaction_id: Uuid,
+    pub notes: Option<String>,
+    pub date: Option<Datestamp>,
+    pub participants: Option<HashSet<Uuid>>,
+}
 
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct ArchiveBuddyResponse {}

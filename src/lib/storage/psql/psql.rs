@@ -3,12 +3,11 @@ use super::models::{
 };
 use super::schema::{buddies, interactions};
 use crate::lib::storage::traits::BuddiesStore;
-use crate::lib::types::{Buddy, Interaction};
-use anyhow::{anyhow, Context, Result};
+use crate::lib::types::{Buddy, Interaction, UpdateBuddyRequest, UpdateInteractionRequest};
+use anyhow::{Context, Result};
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PoolError, PooledConnection};
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-use log::info;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use uuid::Uuid;
@@ -124,7 +123,8 @@ impl BuddiesStore for PsqlBuddiesStore {
     }
     fn archive_interaction(&mut self, id: Uuid, user_id: Uuid) -> Result<()> {
         let conn = self.get_db_conn()?;
-        let update = DBUpdateInteraction::archive().context("Creating archive interaction request")?;
+        let update =
+            DBUpdateInteraction::archive().context("Creating archive interaction request")?;
         diesel::update(
             interactions::dsl::interactions
                 .filter(interactions::dsl::uuid.eq(id.to_string()))
@@ -132,7 +132,45 @@ impl BuddiesStore for PsqlBuddiesStore {
         )
         .set(&update)
         .execute(&conn)
-            .context(format!("Archiving interaction {} {}", id, user_id))?;
+        .context(format!("Archiving interaction {} {}", id, user_id))?;
+        Ok(())
+    }
+    fn update_buddy(&mut self, request: UpdateBuddyRequest) -> Result<()> {
+        let conn = self.get_db_conn()?;
+        // TODO - save 2 clones by refactoring DBUpdateBuddy to take ownership of only a
+        // portion of the updatebuddyrequest
+        let buddy_id = request.buddy_id.clone();
+        let user_id = request.user_id.clone();
+        let update = DBUpdateBuddy::update(request).context("Creating update buddy request")?;
+        diesel::update(
+            buddies::dsl::buddies
+                .filter(buddies::dsl::uuid.eq(buddy_id.to_string()))
+                .filter(buddies::dsl::user_uuid.eq(user_id.to_string())),
+        )
+        .set(&update)
+        .execute(&conn)
+        .context(format!("Updating buddy {} {}", buddy_id, user_id))?;
+        Ok(())
+    }
+    fn update_interaction(&mut self, request: UpdateInteractionRequest) -> Result<()> {
+        let conn = self.get_db_conn()?;
+        // TODO - save 2 clones by refactoring DBUpdateInteraction to take ownership of only a
+        // portion of the updateinteractionrequest
+        let interaction_id = request.interaction_id.clone();
+        let user_id = request.user_id.clone();
+        let update =
+            DBUpdateInteraction::update(request).context("Creating update interaction request")?;
+        diesel::update(
+            interactions::dsl::interactions
+                .filter(interactions::dsl::uuid.eq(interaction_id.to_string()))
+                .filter(interactions::dsl::user_uuid.eq(user_id.to_string())),
+        )
+        .set(&update)
+        .execute(&conn)
+        .context(format!(
+            "Updating interaction {} {}",
+            interaction_id, user_id
+        ))?;
         Ok(())
     }
 }
