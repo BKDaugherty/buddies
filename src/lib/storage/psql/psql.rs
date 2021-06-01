@@ -3,7 +3,10 @@ use super::models::{
 };
 use super::schema::{buddies, interactions};
 use crate::lib::storage::traits::BuddiesStore;
-use crate::lib::types::{Buddy, Interaction, UpdateBuddyRequest, UpdateInteractionRequest};
+use crate::lib::types::{
+    Buddy, CreateUserRequest, Interaction, LoginRequest, UpdateBuddyRequest,
+    UpdateInteractionRequest, User,
+};
 use anyhow::{Context, Result};
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PoolError, PooledConnection};
@@ -173,4 +176,10 @@ impl BuddiesStore for PsqlBuddiesStore {
         ))?;
         Ok(())
     }
+    // fn create_user(&mut self, request: CreateUserRequest) -> Result<()> {
+    //     todo!()
+    // }
+    // fn get_user(&self, request: LoginRequest) -> Result<User> {
+    //     todo!()
+    // }
 }

@@ -1,8 +1,9 @@
-use super::traits::BuddiesStore;
+use super::traits::{AuthStore, BuddiesStore};
 use crate::lib::types::{
-    Buddy, Interaction, Timestamp, UpdateBuddyRequest, UpdateInteractionRequest,
+    Buddy, CreateUserRequest, Interaction, LoginRequest, Timestamp, UpdateBuddyRequest,
+    UpdateInteractionRequest, User,
 };
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
@@ -15,6 +16,8 @@ pub struct MemoryBuddiesStore {
     buddy_storage: Arc<RwLock<HashMap<Uuid, Buddy>>>,
     /// Represents an "interactions" table
     interaction_storage: Arc<RwLock<HashMap<Uuid, Interaction>>>,
+    /// Represents an "users" table
+    user_storage: Arc<RwLock<HashMap<String, User>>>,
 }
 
 impl MemoryBuddiesStore {
@@ -22,6 +25,7 @@ impl MemoryBuddiesStore {
         Self {
             buddy_storage: Arc::new(RwLock::new(HashMap::new())),
             interaction_storage: Arc::new(RwLock::new(HashMap::new())),
+            user_storage: Arc::new(RwLock::new(HashMap::new())),
         }
     }
     pub fn get_buddy(&self, buddy_id: &Uuid) -> Result<Buddy> {
@@ -38,6 +42,13 @@ impl MemoryBuddiesStore {
             .unwrap()
             .get(interaction_id)
             .context(format!("Looking for note with id {}", interaction_id))
+            .map(|x| x.clone())
+    }
+    pub fn find_user(&self, email: &String) -> Option<User> {
+        self.user_storage
+            .read()
+            .unwrap()
+            .get(email)
             .map(|x| x.clone())
     }
 }
@@ -136,5 +147,32 @@ impl BuddiesStore for MemoryBuddiesStore {
             interaction.participants = participants;
         }
         Ok(())
+    }
+}
+
+impl AuthStore for MemoryBuddiesStore {
+    fn create_user(&mut self, request: CreateUserRequest) -> Result<()> {
+        match self.find_user(&request.user.email) {
+            Some(..) => {
+                return Err(anyhow!("User already exists"));
+            }
+            None => {
+                self.user_storage
+                    .write()
+                    .unwrap()
+                    .insert(request.user.email.clone(), request.user);
+            }
+        }
+        Ok(())
+    }
+    fn get_user(&self, request: LoginRequest) -> Result<User> {
+        let user = match self.find_user(&request.email) {
+            Some(user) => user,
+            None => return Err(anyhow!("No user found for email {}", request.email)),
+        };
+        if user.password != request.password {
+            return Err(anyhow!("Password mismatch"));
+        }
+        Ok(user)
     }
 }

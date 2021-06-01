@@ -28,7 +28,18 @@ table! {
     }
 }
 
+table! {
+    users (id) {
+        id -> Int4,
+        email -> Varchar,
+        password -> Varchar,
+        user_id -> Varchar,
+        create_timestamp -> Varchar,
+    }
+}
+
 allow_tables_to_appear_in_same_query!(
     buddies,
     interactions,
+    users,
 );

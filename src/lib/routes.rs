@@ -1,8 +1,9 @@
-use crate::lib::service::{BuddiesService, RequestHandler};
-use crate::lib::storage::BuddiesStore;
+use crate::lib::service::{AuthHandler, AuthService, BuddiesService, RequestHandler};
+use crate::lib::storage::{AuthStore, BuddiesStore};
 use crate::lib::types::{
-    ArchiveBuddyRequest, ArchiveInteractionRequest, CreateBuddyRequest, CreateInteractionRequest,
-    GetUserDataRequest, LoginRequest, SignUpRequest, UpdateBuddyRequest, UpdateInteractionRequest,
+    ArchiveBuddyRequest, ArchiveInteractionRequest, AuthenticationRequest, CreateBuddyRequest,
+    CreateInteractionRequest, GetUserDataRequest, LoginRequest, SignUpRequest, UpdateBuddyRequest,
+    UpdateInteractionRequest,
 };
 
 use uuid::Uuid;
@@ -99,16 +100,27 @@ async fn update_interaction<S: BuddiesStore>(
     }
 }
 
+async fn authenticate<T: AuthStore>(
+    jwt: String,
+    handler: AuthHandler<'_, T>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    todo!()
+}
+
 /// This function links the service to warp's route handling
-pub fn build_warp_routes<S: BuddiesStore>(
+pub fn build_warp_routes<S: BuddiesStore, T: AuthStore>(
+    auth_handler: AuthHandler<'_, T>,
     handler: RequestHandler<S>,
 ) -> BoxedFilter<(impl Reply,)> {
-    // TODO - Figure out how to do JWT in Warp and add auth to handlers that
-    // need it
     let cors = warp::cors()
         .allow_any_origin()
         .allow_headers(vec!["content-type"])
         .allow_methods(vec!["GET", "PUT", "POST"]);
+
+    let auth_filter = warp::any()
+        .map(move || auth_handler.clone())
+        .and(authenticate);
+
     let handler_filter = warp::any().map(move || handler.clone());
 
     let login = warp::post()

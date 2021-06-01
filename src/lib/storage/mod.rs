@@ -1,7 +1,7 @@
 mod memory;
-mod traits;
 mod psql;
+mod traits;
 
-pub use psql::PsqlBuddiesStore;
 pub use memory::MemoryBuddiesStore;
-pub use traits::BuddiesStore;
+pub use psql::PsqlBuddiesStore;
+pub use traits::{AuthStore, BuddiesStore};

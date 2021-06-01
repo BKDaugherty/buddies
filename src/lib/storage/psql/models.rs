@@ -1,6 +1,6 @@
-use super::schema::{buddies, interactions};
+use super::schema::{buddies, interactions, users};
 use crate::lib::types::{
-    Buddy, Datestamp, Interaction, Location, Timestamp, UpdateBuddyRequest,
+    Buddy, Datestamp, Interaction, Location, PublicUser, Timestamp, UpdateBuddyRequest,
     UpdateInteractionRequest,
 };
 use anyhow::{anyhow, Context, Result};
@@ -269,4 +269,45 @@ impl TryFrom<DBInteraction> for Interaction {
             user_id,
         })
     }
+}
+
+#[derive(Queryable)]
+pub struct DBUser {
+    pub id: i32,
+    pub user_uuid: String,
+    pub email: String,
+    pub password: String,
+    pub create_timestamp: String,
+}
+
+impl TryFrom<DBUser> for PublicUser {
+    type Error = anyhow::Error;
+
+    fn try_from(user: DBUser) -> Result<Self, Self::Error> {
+        let id = Uuid::parse_str(&user.user_uuid).context("Parsing user id")?;
+        Ok(Self {
+            id,
+            email: user.email,
+            create_timestamp: Timestamp(
+                user.create_timestamp
+                    .parse()
+                    .context("parsing create timestamp")?,
+            ),
+            last_update_timestamp: Timestamp(
+                // TODO
+                user.create_timestamp
+                    .parse()
+                    .context("parsing last_update timestamp")?,
+            ),
+        })
+    }
+}
+
+#[derive(Insertable)]
+#[table_name = "users"]
+pub struct NewUser {
+    pub email: String,
+    pub password: String,
+    pub user_id: String,
+    pub create_timestamp: String,
 }

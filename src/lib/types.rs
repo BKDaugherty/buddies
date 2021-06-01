@@ -98,10 +98,6 @@ pub struct GetUserDataRequest {
     pub user_id: Uuid,
 }
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct LoginRequest {}
-#[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct SignUpRequest {}
-#[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct UpdateBuddyRequest {
     pub user_id: Uuid,
     pub buddy_id: Uuid,
@@ -138,10 +134,72 @@ pub struct GetUserDataResponse {
     pub buddies: HashMap<Uuid, Buddy>,
     pub interactions: HashMap<Uuid, Interaction>,
 }
+
+#[derive(Debug, Clone, Deserialize, Queryable, Serialize)]
+pub struct LoginRequest {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Queryable, Serialize)]
+pub struct SignUpRequest {
+    pub email: String,
+    pub password: String,
+}
+
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct LoginResponse {}
+pub struct User {
+    pub id: Uuid,
+    pub email: String,
+    pub password: String,
+    /// The time in which this User was registered in the DB
+    pub create_timestamp: Timestamp,
+    /// The last time this record was updated
+    pub last_update_timestamp: Timestamp,
+}
+
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct SignUpResponse {}
+pub struct PublicUser {
+    pub id: Uuid,
+    pub email: String,
+    /// The time in which this User was registered in the DB
+    pub create_timestamp: Timestamp,
+    /// The last time this record was updated
+    pub last_update_timestamp: Timestamp,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
+pub struct CreateUserRequest {
+    pub user: User,
+}
+
+impl From<User> for PublicUser {
+    fn from(item: User) -> Self {
+        PublicUser {
+            id: item.id,
+            email: item.email,
+            last_update_timestamp: item.last_update_timestamp,
+            create_timestamp: item.create_timestamp,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
+pub struct LoginResponse {
+    /// User metadata associated with the login request
+    pub user: PublicUser,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
+pub struct SignUpResponse {
+    pub user: PublicUser,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
+pub struct AuthenticationResponse {}
+#[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
+pub struct AuthenticationRequest {}
+
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct UpdateBuddyResponse {}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
