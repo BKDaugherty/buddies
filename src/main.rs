@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use clap::arg_enum;
 use env_logger::Env;
 use lib::routes::build_warp_routes;
-use lib::service::RequestHandler;
+use lib::service::{AuthHandler, RequestHandler};
 use lib::storage::{MemoryBuddiesStore, PsqlBuddiesStore};
 use log::info;
 use std::env;
