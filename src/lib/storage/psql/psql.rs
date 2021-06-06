@@ -2,7 +2,7 @@ use super::models::{
     DBBuddy, DBInteraction, DBUpdateBuddy, DBUpdateInteraction, NewBuddy, NewInteraction,
 };
 use super::schema::{buddies, interactions};
-use crate::lib::storage::traits::BuddiesStore;
+use crate::lib::storage::traits::{AuthStore, BuddiesStore};
 use crate::lib::types::{
     Buddy, CreateUserRequest, Interaction, LoginRequest, UpdateBuddyRequest,
     UpdateInteractionRequest, User,
@@ -36,6 +36,15 @@ impl PsqlBuddiesStore {
 
     pub fn get_db_conn(&self) -> Result<DBCon, PoolError> {
         self.db_pool.get()
+    }
+}
+
+impl AuthStore for PsqlBuddiesStore {
+    fn create_user(&mut self, _request: CreateUserRequest) -> Result<()> {
+        todo!()
+    }
+    fn get_user(&self, _request: LoginRequest) -> Result<User> {
+        todo!()
     }
 }
 
@@ -176,10 +185,4 @@ impl BuddiesStore for PsqlBuddiesStore {
         ))?;
         Ok(())
     }
-    // fn create_user(&mut self, request: CreateUserRequest) -> Result<()> {
-    //     todo!()
-    // }
-    // fn get_user(&self, request: LoginRequest) -> Result<User> {
-    //     todo!()
-    // }
 }

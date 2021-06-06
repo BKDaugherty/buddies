@@ -6,6 +6,8 @@ use lib::service::{AuthHandler, RequestHandler};
 use lib::storage::{MemoryBuddiesStore, PsqlBuddiesStore};
 use log::info;
 use std::env;
+use std::fs;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 // This is for the psql impl that's not yet built
@@ -26,7 +28,7 @@ arg_enum! {
 #[structopt(name = "buddies", about = "A tool to help me be a better buddy")]
 struct Args {
     /// Database URL to connect to
-    #[structopt(long, env, default_value = "postgresql://localhost:5432/buddies")]
+    #[structopt(long, env = "DATABASE_URL", default_value = "postgresql://localhost:5432/buddies")]
     database_url: String,
     /// Make the logging loud and annoying
     #[structopt(short, long)]
@@ -36,6 +38,10 @@ struct Args {
     port: u16,
     #[structopt(long, possible_values = &Storage::variants(), case_insensitive = true, default_value="memory")]
     storage_type: Storage,
+    #[structopt(long, env = "PRIVATE_KEY_LOCATION", hidden = true)]
+    private_key_location: PathBuf,
+    #[structopt(long, env = "PUBLIC_KEY_LOCATION", hidden = true)]
+    public_key_location: PathBuf,
 }
 
 #[tokio::main]
@@ -60,6 +66,11 @@ async fn main() -> Result<()> {
         Err(..) => args.port,
     };
 
+    let public : Vec<u8> = fs::read(args.public_key_location)
+        .expect("Reading Public Key");
+    let secret : Vec<u8> = fs::read(args.private_key_location)
+        .expect("Reading Private Key");
+
     // Run the service. Because we can't return different types, and we can't make
     // things trait objects either, we run the code in a weird way.
     // TODO --> Can I make these not required to be clone?
@@ -67,15 +78,20 @@ async fn main() -> Result<()> {
         Storage::Psql => {
             info!("Connecting to database at url: {}", args.database_url);
             let buddies_store = PsqlBuddiesStore::new(&args.database_url);
+            let auth_handler = AuthHandler::new(buddies_store.clone(), secret, public)
+                .context("creating auth handler")?;
             let handler = RequestHandler::new(buddies_store);
-            let routes = build_warp_routes(handler);
+            let routes = build_warp_routes(auth_handler, handler);
             info!("Running server on port {}", port);
             warp::serve(routes).run(([0, 0, 0, 0], port)).await;
         }
         Storage::Memory => {
             info!("Using Memory Storage. Note, no information will be saved!");
-            let handler = RequestHandler::new(MemoryBuddiesStore::new());
-            let routes = build_warp_routes(handler);
+            let buddies_store = MemoryBuddiesStore::new();
+            let auth_handler = AuthHandler::new(buddies_store.clone(), secret, public)
+                .context("creating auth handler")?;
+            let handler = RequestHandler::new(buddies_store);
+            let routes = build_warp_routes(auth_handler, handler);
             info!("Running server on port {}", port);
             warp::serve(routes).run(([0, 0, 0, 0], port)).await;
         }

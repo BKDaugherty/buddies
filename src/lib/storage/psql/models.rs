@@ -294,7 +294,6 @@ impl TryFrom<DBUser> for PublicUser {
                     .context("parsing create timestamp")?,
             ),
             last_update_timestamp: Timestamp(
-                // TODO
                 user.create_timestamp
                     .parse()
                     .context("parsing last_update timestamp")?,

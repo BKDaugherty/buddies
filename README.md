@@ -19,6 +19,13 @@ $ diesel migration run
 $ export DATABASE_URL=`heroku pg:credentials:url DATABASE -a buddies-backend | grep "://" | xargs`
 $ diesel migration run
 ```
+
+### Create RSA for local auth development
+```
+openssl genrsa -out private.pem 2048
+openssl rsa -in private.pem -pubout -out public.pem
+```
+
 ## Code Structure
 
 Here's a quick rundown of the structure of the application. I pulled most of the boilerplate from my [notes application which you can see here](https://github.com/BKDaugherty/notes)

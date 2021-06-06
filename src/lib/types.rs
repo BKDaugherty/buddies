@@ -188,6 +188,8 @@ impl From<User> for PublicUser {
 pub struct LoginResponse {
     /// User metadata associated with the login request
     pub user: PublicUser,
+    /// JWT to be used for authentication endpoints
+    pub jwt: String,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
@@ -196,9 +198,13 @@ pub struct SignUpResponse {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct AuthenticationResponse {}
+pub struct AuthenticationResponse {
+    pub user_uuid: Uuid,
+}
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
-pub struct AuthenticationRequest {}
+pub struct AuthenticationRequest {
+    pub json_web_token: String
+}
 
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct UpdateBuddyResponse {}
