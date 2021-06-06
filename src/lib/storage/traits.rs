@@ -19,5 +19,5 @@ pub trait BuddiesStore: Send + Sync + Clone + 'static {
 
 pub trait AuthStore: Send + Sync + Clone + 'static {
     fn create_user(&mut self, request: CreateUserRequest) -> Result<()>;
-    fn get_user(&self, request: LoginRequest) -> Result<User>;
+    fn get_user(&self, request: &LoginRequest) -> Result<User>;
 }

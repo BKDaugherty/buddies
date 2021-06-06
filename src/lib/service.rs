@@ -61,20 +61,10 @@ impl<S: BuddiesStore> RequestHandler<S> {
 
 impl<S: AuthStore> AuthService for AuthHandler<S> {
     fn login(&self, request: LoginRequest) -> Result<LoginResponse> {
-        let mut storage_request = request;
-        storage_request.password = self
-            .hash(storage_request.password)
-            .context("Creating password hash")?;
-
-        let user = self
-            .storage
-            .get_user(storage_request)
-            .context("Retrieving User")?;
-
+        let user = self.storage.get_user(&request).context("Retrieving User")?;
         if let Err(e) = verify(request.password, &user.password) {
             return Err(anyhow!("Password mismatch - {:?}", e));
         }
-
         let user_uuid = user.id.clone();
 
         Ok(LoginResponse {

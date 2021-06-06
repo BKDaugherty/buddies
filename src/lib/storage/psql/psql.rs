@@ -1,13 +1,14 @@
 use super::models::{
-    DBBuddy, DBInteraction, DBUpdateBuddy, DBUpdateInteraction, NewBuddy, NewInteraction,
+    DBBuddy, DBInteraction, DBUpdateBuddy, DBUpdateInteraction, DBUser, NewBuddy, NewInteraction,
+    NewUser,
 };
-use super::schema::{buddies, interactions};
+use super::schema::{buddies, interactions, users};
 use crate::lib::storage::traits::{AuthStore, BuddiesStore};
 use crate::lib::types::{
     Buddy, CreateUserRequest, Interaction, LoginRequest, UpdateBuddyRequest,
     UpdateInteractionRequest, User,
 };
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PoolError, PooledConnection};
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
@@ -40,11 +41,42 @@ impl PsqlBuddiesStore {
 }
 
 impl AuthStore for PsqlBuddiesStore {
-    fn create_user(&mut self, _request: CreateUserRequest) -> Result<()> {
-        todo!()
+    fn create_user(&mut self, request: CreateUserRequest) -> Result<()> {
+        let conn = self.get_db_conn()?;
+        let new_user_request = NewUser {
+            email: request.user.email,
+            password: request.user.password,
+            user_id: request.user.id.to_string(),
+            create_timestamp: request.user.create_timestamp.0.to_string(),
+        };
+
+        diesel::insert_into(users::table)
+            .values(&new_user_request)
+            .execute(&conn)
+            .context(format!(
+                "Attempting to create insert statement for user with uuid {}",
+                new_user_request.user_id
+            ))?;
+
+        Ok(())
     }
-    fn get_user(&self, _request: LoginRequest) -> Result<User> {
-        todo!()
+    fn get_user(&self, request: &LoginRequest) -> Result<User> {
+        let conn = self.get_db_conn()?;
+        let db_users = users::dsl::users
+            .filter(users::dsl::email.eq(&request.email))
+            .load::<DBUser>(&conn)
+            .context(format!("Looking for user {} with email", request.email))?;
+
+        if db_users.len() != 1 {
+            return Err(anyhow!(
+                "Unexpected amount of users found for email {}",
+                request.email,
+            ));
+        } else {
+            let mut db_users = db_users;
+            let user = db_users.pop().expect("db_users must have length 1.");
+            Ok(User::try_from(user).context("Converting user back from DB")?)
+        }
     }
 }
 

@@ -4,7 +4,6 @@ use crate::lib::types::{
     UpdateInteractionRequest, User,
 };
 use anyhow::{anyhow, Context, Result};
-use bcrypt::verify;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
@@ -166,7 +165,7 @@ impl AuthStore for MemoryBuddiesStore {
         }
         Ok(())
     }
-    fn get_user(&self, request: LoginRequest) -> Result<User> {
+    fn get_user(&self, request: &LoginRequest) -> Result<User> {
         match self.find_user(&request.email) {
             Some(user) => Ok(user),
             None => return Err(anyhow!("No user found for email {}", request.email)),

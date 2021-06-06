@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use clap::arg_enum;
 use env_logger::Env;
 use lib::routes::build_warp_routes;
@@ -28,7 +28,11 @@ arg_enum! {
 #[structopt(name = "buddies", about = "A tool to help me be a better buddy")]
 struct Args {
     /// Database URL to connect to
-    #[structopt(long, env = "DATABASE_URL", default_value = "postgresql://localhost:5432/buddies")]
+    #[structopt(
+        long,
+        env = "DATABASE_URL",
+        default_value = "postgresql://localhost:5432/buddies"
+    )]
     database_url: String,
     /// Make the logging loud and annoying
     #[structopt(short, long)]
@@ -36,12 +40,16 @@ struct Args {
     /// Port to listen on
     #[structopt(short, long, default_value = "9001")]
     port: u16,
-    #[structopt(long, possible_values = &Storage::variants(), case_insensitive = true, default_value="memory")]
+    #[structopt(long, possible_values = &Storage::variants(), case_insensitive = true, default_value="psql")]
     storage_type: Storage,
     #[structopt(long, env = "PRIVATE_KEY_LOCATION", hidden = true)]
-    private_key_location: PathBuf,
+    private_key_location: Option<PathBuf>,
     #[structopt(long, env = "PUBLIC_KEY_LOCATION", hidden = true)]
-    public_key_location: PathBuf,
+    public_key_location: Option<PathBuf>,
+    #[structopt(long, env = "PRIVATE_KEY", hidden = true)]
+    private_key: Option<String>,
+    #[structopt(long, env = "PUBLIC_KEY", hidden = true)]
+    public_key: Option<String>,
 }
 
 #[tokio::main]
@@ -66,10 +74,23 @@ async fn main() -> Result<()> {
         Err(..) => args.port,
     };
 
-    let public : Vec<u8> = fs::read(args.public_key_location)
-        .expect("Reading Public Key");
-    let secret : Vec<u8> = fs::read(args.private_key_location)
-        .expect("Reading Private Key");
+    let public: Vec<u8> = match (args.public_key, args.public_key_location) {
+        (Some(key), _) => key.as_bytes().to_vec(),
+        (None, Some(path)) => fs::read(path).expect("Reading Public Key"),
+        (None, None) => {
+            // TODO -> Logic in structopt
+            return Err(anyhow!("One of public key or path must be provided"));
+        }
+    };
+
+    let secret: Vec<u8> = match (args.private_key, args.private_key_location) {
+        (Some(key), _) => key.as_bytes().to_vec(),
+        (None, Some(path)) => fs::read(path).expect("Reading Private Key"),
+        (None, None) => {
+            // TODO -> Logic in structopt
+            return Err(anyhow!("One of private key or path must be provided"));
+        }
+    };
 
     // Run the service. Because we can't return different types, and we can't make
     // things trait objects either, we run the code in a weird way.

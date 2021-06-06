@@ -1,7 +1,7 @@
 use super::schema::{buddies, interactions, users};
 use crate::lib::types::{
-    Buddy, Datestamp, Interaction, Location, PublicUser, Timestamp, UpdateBuddyRequest,
-    UpdateInteractionRequest,
+    Buddy, Datestamp, Interaction, Location, Timestamp, UpdateBuddyRequest,
+    UpdateInteractionRequest, User,
 };
 use anyhow::{anyhow, Context, Result};
 use std::collections::HashSet;
@@ -271,16 +271,16 @@ impl TryFrom<DBInteraction> for Interaction {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Debug)]
 pub struct DBUser {
     pub id: i32,
-    pub user_uuid: String,
     pub email: String,
     pub password: String,
+    pub user_uuid: String,
     pub create_timestamp: String,
 }
 
-impl TryFrom<DBUser> for PublicUser {
+impl TryFrom<DBUser> for User {
     type Error = anyhow::Error;
 
     fn try_from(user: DBUser) -> Result<Self, Self::Error> {
@@ -288,6 +288,7 @@ impl TryFrom<DBUser> for PublicUser {
         Ok(Self {
             id,
             email: user.email,
+            password: user.password,
             create_timestamp: Timestamp(
                 user.create_timestamp
                     .parse()
