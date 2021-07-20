@@ -225,7 +225,21 @@ pub fn build_warp_routes<S: BuddiesStore, T: AuthStore>(
 ) -> BoxedFilter<(impl Reply,)> {
     let cors = warp::cors()
         .allow_any_origin()
-        .allow_headers(vec!["content-type"])
+        .allow_headers(vec![
+            "Accept",
+            "Accept-Encoding",
+            "Access-Control-Request-Headers",
+            "Access-Contorl-Request-Method",
+            "Authorization",
+            "Connection",
+            "Content-Type",
+            "Host",
+            "Origin",
+            "Referer",
+            "Sec-Fetch-Dest",
+            "Sec-Fetch-Mode",
+            "User-Agent",
+        ])
         .allow_methods(vec!["GET", "PUT", "POST"]);
 
     let auth_handler_filter = warp::any().map(move || auth_handler.clone());
