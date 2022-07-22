@@ -105,6 +105,7 @@ pub struct UpdateBuddyRequest {
     pub notes: Option<String>,
     pub last_contacted: Option<Datestamp>,
     pub location: Option<Location>,
+    pub birthday: Option<Datestamp>,
 }
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct UpdateInteractionRequest {
@@ -203,7 +204,7 @@ pub struct AuthenticationResponse {
 }
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
 pub struct AuthenticationRequest {
-    pub json_web_token: String
+    pub json_web_token: String,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Queryable, Serialize)]
