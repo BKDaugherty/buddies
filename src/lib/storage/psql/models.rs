@@ -85,6 +85,7 @@ pub struct DBUpdateBuddy {
     pub notes: Option<String>,
     pub last_contacted: Option<String>,
     pub location: Option<String>,
+    pub birthday: Option<String>,
     pub delete_timestamp: Option<String>,
 }
 
@@ -106,6 +107,7 @@ impl DBUpdateBuddy {
         Ok(Self {
             name: request.name,
             notes: request.notes,
+            birthday: request.birthday.map(|x| x.0),
             last_contacted: request.last_contacted.map(|x| x.0),
             location: request.location.map(|x| x.0),
             last_update_timestamp: format!("{}", now),
